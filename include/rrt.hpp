@@ -1,14 +1,46 @@
+#include <angles/angles.h>
 #include <math.h>
 #include <vector>
 #include <stdlib.h>
 
 #include <ros/ros.h>
+#include <base_local_planner/world_model.h>
+#include <base_local_planner/costmap_model.h>
 #include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
+#include <nav_core/base_global_planner.h>
 
 #include "2d_space.hpp"
 #include "math_funcs.hpp"
+
+using std::string;
+
+#ifndef GLOBAL_PLANNER_CPP
+#define GLOBAL_PLANNER_CPP
+
+namespace global_planner {
+    class RRTGlobalPlanner : public nav_core::BaseGlobalPlanner {
+        public:
+            RRTGlobalPlanner();
+            RRTGlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+
+            void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+            bool makePlan(const geometry_msgs::PoseStamped& start,
+                          const geometry_msgs::PoseStamped& goal,
+                          std::vector<geometry_msgs::PoseStamped>& plan
+                          );
+        private:
+            costmap_2d::Costmap2DROS* costmap_ros_;
+            double goal_tol, d;
+            int K_in;
+            ros::NodeHandle nh;
+    };  
+};
+
+#endif
 
 /**
  * Performs basic Rapidly-exploring Random Tree (RRT)
@@ -183,9 +215,8 @@ rrt generateRRT(geometry_msgs::Point x_init,
 }
 
 //Returns Global path from start to goal from RRT
-nav_msgs::Path getGlobalPath(const rrt* tree){
-    nav_msgs::Path global_path; //array of PoseStamped
-    global_path.header.frame_id="map";
+std::vector<geometry_msgs::PoseStamped> getGlobalPath(const rrt* tree){
+    std::vector<geometry_msgs::PoseStamped> global_path;
     geometry_msgs::PoseStamped pose_stamped;
     pose_stamped.header.frame_id="map";
 
@@ -197,14 +228,14 @@ nav_msgs::Path getGlobalPath(const rrt* tree){
         // Retrieve pose of current ID
         pose_stamped.pose.position=tree->tree_nodes.at(current_id).vertex;
         // Add pose to global path
-        global_path.poses.push_back(pose_stamped);
+        global_path.push_back(pose_stamped);
         // Identify next vertex in path (parent node)
         current_id=tree->tree_nodes.at(current_id).parent_id;
     }
 
     // Add x_initial
     pose_stamped.pose.position=tree->tree_nodes.at(0).vertex;
-    global_path.poses.push_back(pose_stamped);
+    global_path.push_back(pose_stamped);
 
     return global_path;
 }

@@ -8,6 +8,8 @@ project(rrt-global-planner)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  base_local_planner
+  nav_core
   nav_msgs
   roscpp
   rospy
@@ -126,9 +128,9 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/rrt-global-planner.cpp
-# )
+add_library(rrt_global_planner_lib
+  src/rrt.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -141,7 +143,6 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/rrt-global-planner_node.cpp)
 add_executable(occ_grid_generator_node src/occ_grid_generator.cpp)
 add_executable(path_pub_node src/path_pub.cpp)
-add_executable(rrt_node src/rrt.cpp)
 add_executable(rviz_marker_node src/rviz_marker_generator.cpp)
 
 ## Rename C++ executable without prefix
@@ -155,7 +156,7 @@ add_executable(rviz_marker_node src/rviz_marker_generator.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(occ_grid_generator_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(path_pub_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(rrt_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(rrt_global_planner_lib ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(rviz_marker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
@@ -168,7 +169,7 @@ target_link_libraries(occ_grid_generator_node
 target_link_libraries(path_pub_node
   ${catkin_LIBRARIES}
 )
-target_link_libraries(rrt_node
+target_link_libraries(rrt_global_planner_lib
   ${catkin_LIBRARIES}
 )
 target_link_libraries(rviz_marker_node
