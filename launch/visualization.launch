@@ -1,0 +1,10 @@
+<launch>
+  <!-- Launch Occupancy Grid Generator Node -->
+  <node type="occ_grid_generator_node" name="occ_grid_generator_node" pkg="rrt-global-planner" />
+
+  <!-- Launch Path Publisher Node -->
+  <node type="path_pub_node" name="path_pub_node" pkg="rrt-global-planner" />
+
+  <!-- Launch RViz -->
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find rrt-global-planner)/config/rrt.rviz" />
+</launch>
