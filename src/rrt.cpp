@@ -18,20 +18,23 @@ RRTGlobalPlanner::RRTGlobalPlanner(std::string name, costmap_2d::Costmap2DROS* c
 
 void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
     costmap_ros_ = costmap_ros;
-
+    ROS_INFO("Initializing RRTGlobalPlanner.");
     // Retrieve RRT parameters
-    nh.getParam("rrt_node/goal_tol", goal_tol);
-    nh.getParam("rrt_node/K_in", K_in); 
-    nh.getParam("rrt_node/d", d);
+    nh.getParam("/rrt/goal_tol", goal_tol);
+    nh.getParam("/rrt/K_in", K_in); 
+    nh.getParam("/rrt/d", d);
+    ROS_INFO("Retrieved parameters for RRTGlobalPlanner.");
 }
 
 bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, 
                                 const geometry_msgs::PoseStamped& goal,  
                                 std::vector<geometry_msgs::PoseStamped>& plan ){
 
+    ROS_INFO("Generating RRT.");
     rrt T_out=generateRRT(start.pose.position, goal.pose.position, 
                           this->costmap_ros_, this->goal_tol, 
                           this->K_in, this->d);
+    ROS_INFO("Setting Global Path from RRT.");
     // Get Global path
     plan=getGlobalPath(&T_out);
 
