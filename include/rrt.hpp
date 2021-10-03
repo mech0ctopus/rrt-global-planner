@@ -36,6 +36,8 @@ namespace global_planner {
             costmap_2d::Costmap2DROS* costmap_ros_;
             double goal_tol, d;
             int K_in;
+            std::string global_costmap_frame;
+            std::string global_costmap_origin_x, global_costmap_origin_y;
             ros::NodeHandle nh;
     };  
 };
@@ -130,6 +132,7 @@ tree_node getNearestNeighbor(const geometry_msgs::Point point1,
     }
 
     nearest_neighbor_node.vertex=nearest_neighbor;
+    nearest_neighbor_node.vertex.z=1.; //Assume planar for now
     nearest_neighbor_node.parent_id=parent_id;
 
     return nearest_neighbor_node;
@@ -164,8 +167,8 @@ tree_node extendTree(const tree_node point_near,
  * @param[in] K Number of vertices.
  * @param[in] d Distance to extend tree per step.
  */
-rrt generateRRT(geometry_msgs::Point x_init,
-                geometry_msgs::Point x_final,
+rrt generateRRT(geometry_msgs::Point x_init, //In map frame
+                geometry_msgs::Point x_final, //In map frame
                 costmap_2d::Costmap2DROS* costmap_ros,
                 double goal_tol,
                 int K,
@@ -173,11 +176,22 @@ rrt generateRRT(geometry_msgs::Point x_init,
     //Initialize RRT with x_init
     rrt T(x_init, costmap_ros);
     //Initialize local variables
-    geometry_msgs::Point x_rand;
+    geometry_msgs::Point x_rand; //in map frame
     tree_node x_near, x_new;
+
+    ROS_INFO("Inside generateRRT in rrt.hpp");
 
     for (int k = 1; k <= K; k++)
     {
+        ROS_INFO("Iter: %i in rrt.hpp", k);
+
+        // All of these printouts seem fine
+        // ROS_INFO("x_init.position: %f, %f, %f in rrt.hpp", x_init.x, x_init.y, x_init.z);
+        // ROS_INFO("x_final.position: %f, %f, %f in rrt.hpp", x_final.x, x_final.y, x_final.z);
+        // ROS_INFO("Param goal_tol: %f in rrt.hpp", goal_tol);
+        // ROS_INFO("Param K: %i in rrt.hpp", K);
+        // ROS_INFO("Param d: %f in rrt.hpp", d);
+
         bool edgeIsFree{0};
         std::vector<geometry_msgs::Point> edge{};
 
@@ -189,27 +203,37 @@ rrt generateRRT(geometry_msgs::Point x_init,
         x_new=extendTree(x_near, x_rand, d);
 
         // Check if x_new and x_near can connect
+        ROS_INFO("Checking edge from rrt.hpp");
+        ROS_INFO("x_new: %f, %f, %f in rrt.hpp", 
+                 x_new.vertex.x, x_new.vertex.y, x_new.vertex.z);
+        ROS_INFO("x_near: %f, %f, %f in rrt.hpp", 
+                 x_near.vertex.x, x_near.vertex.y, x_near.vertex.z);
         edge.push_back(x_new.vertex);
         edge.push_back(x_near.vertex);
+        
+        //TODO: Temporariliy convert edge to costmap frame before checking??
+        ROS_INFO("Call edgeInFreeSpace from rrt.hpp");
         edgeIsFree=edgeInFreeSpace(edge, T.X_space);
         if (edgeIsFree){
+            ROS_INFO("Edge IS in free space from rrt.hpp.");
             T.add_vertex(x_new);
             T.add_edge(x_near.vertex, x_new.vertex);
         } else {
+            ROS_INFO("Edge not in free space from rrt.hpp.");
             k--;
             continue;
         };
 
-        std::cout << "Processed " << k << "/" << K << " RRT vertices. \n";
+        ROS_INFO("Processed %i/%i RRT vertices.", k, K);
 
         if (getDistance(x_new.vertex, x_final)<=goal_tol){
-            std::cout << "Successfully found Path with RRT. \n";  
+            ROS_INFO("Successfully found Path with RRT.");  
             break;          
         }
 
     }
 
-    std::cout << "Finished Processing. Returning RRT. \n";
+    ROS_INFO("Finished Processing. Returning RRT.");
 
     return T;
 }

@@ -23,6 +23,10 @@ void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* co
     nh.getParam("/rrt/goal_tol", goal_tol);
     nh.getParam("/rrt/K_in", K_in); 
     nh.getParam("/rrt/d", d);
+    // Retrieve move_base parameters
+    nh.getParam("/move_base/global_costmap/global_frame", global_costmap_frame);
+    nh.getParam("/move_base/global_costmap/origin_x", global_costmap_origin_x);
+    nh.getParam("/move_base/global_costmap/origin_y", global_costmap_origin_y);
     ROS_INFO("Retrieved parameters for RRTGlobalPlanner.");
 }
 
