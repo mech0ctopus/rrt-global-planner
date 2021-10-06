@@ -32,13 +32,16 @@ namespace global_planner {
                           const geometry_msgs::PoseStamped& goal,
                           std::vector<geometry_msgs::PoseStamped>& plan
                           );
+            void publishPlan(const std::vector<geometry_msgs::PoseStamped>& plan);
+            ~RRTGlobalPlanner(){}
         private:
             costmap_2d::Costmap2DROS* costmap_ros_;
+            costmap_2d::Costmap2D* costmap_;
             double goal_tol, d;
             int K_in;
             std::string global_costmap_frame;
             std::string global_costmap_origin_x, global_costmap_origin_y;
-            ros::NodeHandle nh;
+            ros::Publisher plan_pub_;
     };  
 };
 
@@ -132,7 +135,7 @@ tree_node getNearestNeighbor(const geometry_msgs::Point point1,
     }
 
     nearest_neighbor_node.vertex=nearest_neighbor;
-    nearest_neighbor_node.vertex.z=1.; //Assume planar for now
+    nearest_neighbor_node.vertex.z=0.; //Assume planar for now
     nearest_neighbor_node.parent_id=parent_id;
 
     return nearest_neighbor_node;
@@ -145,7 +148,7 @@ tree_node extendTree(const tree_node point_near,
                      const geometry_msgs::Point point_rand,
                      const double d){
     tree_node point_new{};
-    point_new.vertex.z=1.; //Assume z=1 for now
+    point_new.vertex.z=0.; //Assume z=0 for now
 
     double theta=atan2(point_rand.y-point_near.vertex.y,
                        point_rand.x-point_near.vertex.x);
@@ -177,20 +180,23 @@ rrt generateRRT(geometry_msgs::Point x_init, //In map frame
     rrt T(x_init, costmap_ros);
     //Initialize local variables
     geometry_msgs::Point x_rand; //in map frame
-    tree_node x_near, x_new;
+    tree_node x_near, x_new; //in map frame
 
     ROS_INFO("Inside generateRRT in rrt.hpp");
-
+    // All of these printouts seem fine
+    ROS_INFO("x_init.position: %f, %f, %f in rrt.hpp", x_init.x, x_init.y, x_init.z);
+    ROS_INFO("x_final.position: %f, %f, %f in rrt.hpp", x_final.x, x_final.y, x_final.z);
+    ROS_INFO("Param goal_tol: %f in rrt.hpp", goal_tol);
+    ROS_INFO("Param K: %i in rrt.hpp", K);
+    ROS_INFO("Param d: %f in rrt.hpp", d);
+    
     for (int k = 1; k <= K; k++)
     {
         ROS_INFO("Iter: %i in rrt.hpp", k);
-
-        // All of these printouts seem fine
-        // ROS_INFO("x_init.position: %f, %f, %f in rrt.hpp", x_init.x, x_init.y, x_init.z);
-        // ROS_INFO("x_final.position: %f, %f, %f in rrt.hpp", x_final.x, x_final.y, x_final.z);
-        // ROS_INFO("Param goal_tol: %f in rrt.hpp", goal_tol);
-        // ROS_INFO("Param K: %i in rrt.hpp", K);
-        // ROS_INFO("Param d: %f in rrt.hpp", d);
+        // do 
+        // {
+        //     std::cout << '\n' << "Press a key to continue...";
+        // } while (std::cin.get() != '\n');
 
         bool edgeIsFree{0};
         std::vector<geometry_msgs::Point> edge{};
@@ -239,27 +245,37 @@ rrt generateRRT(geometry_msgs::Point x_init, //In map frame
 }
 
 //Returns Global path from start to goal from RRT
-std::vector<geometry_msgs::PoseStamped> getGlobalPath(const rrt* tree){
-    std::vector<geometry_msgs::PoseStamped> global_path;
+bool getGlobalPath(const rrt* tree,
+                   std::vector<geometry_msgs::PoseStamped>* plan){
     geometry_msgs::PoseStamped pose_stamped;
     pose_stamped.header.frame_id="map";
+    //TODO: Calculate orientation for each pose
+    pose_stamped.pose.orientation.w=1.; //Assume orientation for now
+
+    plan->clear();
 
     //Add last vertex (closest to goal)
     int current_id=tree->tree_nodes.size()-1;
 
-    //Work our way back to x_initial, building global_path
+    ROS_INFO("From getGlobalPath");
+    //Work our way back to x_initial, building plan
     while (current_id != 0){
         // Retrieve pose of current ID
         pose_stamped.pose.position=tree->tree_nodes.at(current_id).vertex;
-        // Add pose to global path
-        global_path.push_back(pose_stamped);
+        ROS_INFO("pose in tree: %f, %f, %f in rrt.hpp", 
+                 pose_stamped.pose.position.x, 
+                 pose_stamped.pose.position.y,
+                 pose_stamped.pose.position.z);
+        // Add pose to plan
+        plan->push_back(pose_stamped);
         // Identify next vertex in path (parent node)
         current_id=tree->tree_nodes.at(current_id).parent_id;
     }
 
     // Add x_initial
     pose_stamped.pose.position=tree->tree_nodes.at(0).vertex;
-    global_path.push_back(pose_stamped);
+    pose_stamped.header.stamp=ros::Time::now();
+    plan->push_back(pose_stamped);
 
-    return global_path;
+    return true;
 }

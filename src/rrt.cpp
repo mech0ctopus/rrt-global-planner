@@ -18,6 +18,11 @@ RRTGlobalPlanner::RRTGlobalPlanner(std::string name, costmap_2d::Costmap2DROS* c
 
 void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
     costmap_ros_ = costmap_ros;
+    costmap_ = costmap_ros_->getCostmap();
+    // footprint_ = costmap_ros_->getRobotFootprint();
+
+    ros::NodeHandle nh;
+    plan_pub_ = nh.advertise<nav_msgs::Path>("/move_base/DWAPlannerROS/global_plan", 1);
     ROS_INFO("Initializing RRTGlobalPlanner.");
     // Retrieve RRT parameters
     nh.getParam("/rrt/goal_tol", goal_tol);
@@ -33,15 +38,45 @@ void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* co
 bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, 
                                 const geometry_msgs::PoseStamped& goal,  
                                 std::vector<geometry_msgs::PoseStamped>& plan ){
-
     ROS_INFO("Generating RRT.");
     rrt T_out=generateRRT(start.pose.position, goal.pose.position, 
                           this->costmap_ros_, this->goal_tol, 
                           this->K_in, this->d);
-    ROS_INFO("Setting Global Path from RRT.");
-    // Get Global path
-    plan=getGlobalPath(&T_out);
+
+    // Get Global path (clears, then sets plan)
+    getGlobalPath(&T_out, &plan);
+    ROS_INFO("Found Global Path from RRT");
+
+    publishPlan(plan);
+    ROS_INFO("Published Global Path from RRT");
+
+    // do 
+    // {
+    //     std::cout << '\n' << "Press a key to continue...";
+    // } while (std::cin.get() != '\n');
 
     return true;
+  }
+
+  void RRTGlobalPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped>& plan){
+    //create a message for the plan 
+    nav_msgs::Path rviz_path;
+    rviz_path.poses.resize(plan.size());
+    
+    if(plan.empty()) {
+      //still set a valid frame so visualization won't hit transform issues
+      rviz_path.header.frame_id = "map";
+      rviz_path.header.stamp = ros::Time::now();
+    } else { 
+      rviz_path.header.frame_id = plan[0].header.frame_id;
+      rviz_path.header.stamp = plan[0].header.stamp;
+    }
+
+    // Extract the plan in world co-ordinates, we assume the plan is all in the same frame
+    for(unsigned int i=0; i < plan.size(); i++){
+      rviz_path.poses[i] = plan[i];
+    }
+
+    plan_pub_.publish(rviz_path);
   }
 };
