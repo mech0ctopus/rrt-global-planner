@@ -34,7 +34,7 @@ double getDistance(const geometry_msgs::Point point1,
 bool inFreeSpace(const geometry_msgs::Point point, 
                  const costmap_2d::Costmap2DROS* costmap_ros){
     bool result{0};
-    unsigned char threshold{252}; //127, 252
+    unsigned char threshold{252};
     unsigned int mx, my;
 
     //Set mx, my (map coordinates) from world
@@ -42,7 +42,6 @@ bool inFreeSpace(const geometry_msgs::Point point,
                                           mx, my);
 
     if (costmap_ros->getCostmap()->getCost(mx,my)<=threshold) {
-        ROS_INFO("The point is free!.");
         result=1;
     }
 
@@ -69,8 +68,6 @@ bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge,
     //Check each point in array using inFreeSpace
     bool edgePointIsFree{0};
     for (auto edge_point:edge_points){
-        ROS_INFO("edge_point.x:%f m.",edge_point.x);
-        ROS_INFO("edge_point.y:%f m.",edge_point.y);
         edgePointIsFree=inFreeSpace(edge_point, costmap_ros);
         if (edgePointIsFree){
             continue; //skip to next iteration
@@ -80,7 +77,6 @@ bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge,
             break;
         }
     }
-    // ROS_INFO("Returning edgeInFreeSpace.");
     return result;
 }
 
@@ -101,11 +97,8 @@ geometry_msgs::Point getRandomState(costmap_2d::Costmap2DROS* costmap_ros){
     double max_h=costmap_ros->getCostmap()->getSizeInCellsY()*
                  costmap_ros->getCostmap()->getResolution();
     while (!pointIsFree){
-        //TODO: REMOVE THIS
-        double reduce_area{0.2};
-        randomState.x=reduce_area*randomDouble(-max_w/2,max_w/2);
-        randomState.y=reduce_area*randomDouble(-max_h/2,max_h/2);
-        ROS_INFO("Checking new random state.");
+        randomState.x=randomDouble(-max_w/2,max_w/2);
+        randomState.y=randomDouble(-max_h/2,max_h/2);
         pointIsFree=inFreeSpace(randomState, costmap_ros);
     }
 

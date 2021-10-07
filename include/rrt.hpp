@@ -90,7 +90,6 @@ public:
         initial_node.vertex=x_init;
         add_vertex(initial_node);
     }
-    //~rrt();
 
     //Adds node to node vector
     void add_vertex(const tree_node new_node){
@@ -104,6 +103,8 @@ public:
         edge.push_back(point2);
         this->edges.push_back(edge);
     }
+
+    ~rrt(){};
 };
 
 /**
@@ -171,34 +172,21 @@ tree_node extendTree(const tree_node point_near,
  * @param[in] K Number of vertices.
  * @param[in] d Distance to extend tree per step.
  */
-rrt generateRRT(geometry_msgs::Point x_init, //In map frame
-                geometry_msgs::Point x_final, //In map frame
+rrt generateRRT(geometry_msgs::PoseStamped x_init, //In map frame
+                geometry_msgs::PoseStamped x_final, //In map frame
                 costmap_2d::Costmap2DROS* costmap_ros,
                 double goal_tol,
                 int K,
                 double d){
     //Initialize RRT with x_init
-    rrt T(x_init, costmap_ros);
+    rrt T(x_init.pose.position, costmap_ros);
     //Initialize local variables
     geometry_msgs::Point x_rand; //in map frame
     tree_node x_near, x_new; //in map frame
 
-    ROS_INFO("Inside generateRRT in rrt.hpp");
-    // All of these printouts seem fine
-    ROS_INFO("x_init.position: %f, %f, %f in rrt.hpp", x_init.x, x_init.y, x_init.z);
-    ROS_INFO("x_final.position: %f, %f, %f in rrt.hpp", x_final.x, x_final.y, x_final.z);
-    ROS_INFO("Param goal_tol: %f in rrt.hpp", goal_tol);
-    ROS_INFO("Param K: %i in rrt.hpp", K);
-    ROS_INFO("Param d: %f in rrt.hpp", d);
-    
+    // Build Tree
     for (int k = 1; k <= K; k++)
     {
-        ROS_INFO("Iter: %i in rrt.hpp", k);
-        // do 
-        // {
-        //     std::cout << '\n' << "Press a key to continue...";
-        // } while (std::cin.get() != '\n');
-
         bool edgeIsFree{0};
         std::vector<geometry_msgs::Point> edge{};
 
@@ -210,73 +198,66 @@ rrt generateRRT(geometry_msgs::Point x_init, //In map frame
         x_new=extendTree(x_near, x_rand, d);
 
         // Check if x_new and x_near can connect
-        ROS_INFO("Checking edge from rrt.hpp");
-        ROS_INFO("x_new: %f, %f, %f in rrt.hpp", 
-                 x_new.vertex.x, x_new.vertex.y, x_new.vertex.z);
-        ROS_INFO("x_near: %f, %f, %f in rrt.hpp", 
-                 x_near.vertex.x, x_near.vertex.y, x_near.vertex.z);
         edge.push_back(x_new.vertex);
         edge.push_back(x_near.vertex);
         
-        //TODO: Temporariliy convert edge to costmap frame before checking??
-        ROS_INFO("Call edgeInFreeSpace from rrt.hpp");
+        // Check if edge is in free space
         edgeIsFree=edgeInFreeSpace(edge, T.X_space);
         if (edgeIsFree){
-            ROS_INFO("Edge IS in free space from rrt.hpp.");
             T.add_vertex(x_new);
             T.add_edge(x_near.vertex, x_new.vertex);
         } else {
-            ROS_INFO("Edge not in free space from rrt.hpp.");
             k--;
             continue;
         };
 
         ROS_INFO("Processed %i/%i RRT vertices.", k, K);
 
-        if (getDistance(x_new.vertex, x_final)<=goal_tol){
-            ROS_INFO("Successfully found Path with RRT.");  
+        if (getDistance(x_new.vertex, x_final.pose.position)<=goal_tol){ 
             break;          
         }
 
     }
-
-    ROS_INFO("Finished Processing. Returning RRT.");
 
     return T;
 }
 
 //Returns Global path from start to goal from RRT
 bool getGlobalPath(const rrt* tree,
-                   std::vector<geometry_msgs::PoseStamped>* plan){
+                   std::vector<geometry_msgs::PoseStamped>* plan,
+                   const geometry_msgs::PoseStamped& start, 
+                   const geometry_msgs::PoseStamped& goal){
     geometry_msgs::PoseStamped pose_stamped;
     pose_stamped.header.frame_id="map";
-    //TODO: Calculate orientation for each pose
-    pose_stamped.pose.orientation.w=1.; //Assume orientation for now
 
     plan->clear();
 
     //Add last vertex (closest to goal)
     int current_id=tree->tree_nodes.size()-1;
+    //Set goal orientation for last vertex
+    pose_stamped.pose.orientation=goal.pose.orientation;
 
-    ROS_INFO("From getGlobalPath");
     //Work our way back to x_initial, building plan
     while (current_id != 0){
         // Retrieve pose of current ID
         pose_stamped.pose.position=tree->tree_nodes.at(current_id).vertex;
-        ROS_INFO("pose in tree: %f, %f, %f in rrt.hpp", 
-                 pose_stamped.pose.position.x, 
-                 pose_stamped.pose.position.y,
-                 pose_stamped.pose.position.z);
         // Add pose to plan
         plan->push_back(pose_stamped);
         // Identify next vertex in path (parent node)
         current_id=tree->tree_nodes.at(current_id).parent_id;
+
+        //TODO: Set orientations 
+            // - get yaw from atan2 using current point and prev. point.
+            // - convert to quat
+            // set orientation.)
     }
 
     // Add x_initial
     pose_stamped.pose.position=tree->tree_nodes.at(0).vertex;
+    pose_stamped.pose.orientation=start.pose.orientation;
     plan->push_back(pose_stamped);
 
+    // Reverse so that x_initial is first and goal is last.
     std::reverse(plan->begin(), plan->end());
 
     return true;

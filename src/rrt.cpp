@@ -39,21 +39,15 @@ bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start,
                                 const geometry_msgs::PoseStamped& goal,  
                                 std::vector<geometry_msgs::PoseStamped>& plan ){
     ROS_INFO("Generating RRT.");
-    rrt T_out=generateRRT(start.pose.position, goal.pose.position, 
+    rrt T_out=generateRRT(start, goal, 
                           this->costmap_ros_, this->goal_tol, 
                           this->K_in, this->d);
 
     // Get Global path (clears, then sets plan)
-    getGlobalPath(&T_out, &plan);
+    getGlobalPath(&T_out, &plan, start, goal);
     ROS_INFO("Found Global Path from RRT");
 
     publishPlan(plan);
-    ROS_INFO("Published Global Path from RRT");
-
-    // do 
-    // {
-    //     std::cout << '\n' << "Press a key to continue...";
-    // } while (std::cin.get() != '\n');
 
     return true;
   }
