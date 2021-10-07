@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <angles/angles.h>
 #include <math.h>
 #include <vector>
@@ -274,8 +275,9 @@ bool getGlobalPath(const rrt* tree,
 
     // Add x_initial
     pose_stamped.pose.position=tree->tree_nodes.at(0).vertex;
-    pose_stamped.header.stamp=ros::Time::now();
     plan->push_back(pose_stamped);
+
+    std::reverse(plan->begin(), plan->end());
 
     return true;
 }
