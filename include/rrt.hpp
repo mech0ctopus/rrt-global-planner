@@ -11,8 +11,11 @@
 #include <costmap_2d/costmap_2d.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Quaternion.h>
 #include <nav_msgs/Path.h>
 #include <nav_core/base_global_planner.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 #include "2d_space.hpp"
 #include "math_funcs.hpp"
@@ -227,8 +230,11 @@ bool getGlobalPath(const rrt* tree,
                    std::vector<geometry_msgs::PoseStamped>* plan,
                    const geometry_msgs::PoseStamped& start, 
                    const geometry_msgs::PoseStamped& goal){
-    geometry_msgs::PoseStamped pose_stamped;
+    geometry_msgs::PoseStamped pose_stamped; 
     pose_stamped.header.frame_id="map";
+    int prev_id;
+    tf2::Quaternion quat_tf;
+    geometry_msgs::Quaternion quat_msg;
 
     plan->clear();
 
@@ -243,13 +249,24 @@ bool getGlobalPath(const rrt* tree,
         pose_stamped.pose.position=tree->tree_nodes.at(current_id).vertex;
         // Add pose to plan
         plan->push_back(pose_stamped);
-        // Identify next vertex in path (parent node)
+        // Identify next vertex in path (parent node), store previous ID
+        prev_id=current_id;
         current_id=tree->tree_nodes.at(current_id).parent_id;
 
-        //TODO: Set orientations 
-            // - get yaw from atan2 using current point and prev. point.
-            // - convert to quat
-            // set orientation.)
+        // Set orientation for next iteration
+        double dy, dx, yaw;
+        dy=tree->tree_nodes.at(prev_id).vertex.y-
+           tree->tree_nodes.at(current_id).vertex.y;
+        dx=tree->tree_nodes.at(prev_id).vertex.x-
+           tree->tree_nodes.at(current_id).vertex.x;
+        // Get yaw from atan2 using current point and prev. point.
+        yaw=atan2(dy,dx);
+        // Convert RPY to quat
+        quat_tf.setRPY(0, 0, yaw);
+        // Convert Quat TF to msg
+        quat_msg=tf2::toMsg(quat_tf);
+        // set orientation.
+        pose_stamped.pose.orientation=quat_msg;
     }
 
     // Add x_initial
