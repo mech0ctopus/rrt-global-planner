@@ -16,6 +16,15 @@ void init_line(visualization_msgs::Marker* line_msg){
 
 }
 
+void clear_markers(ros::Publisher* line_pub) {
+    visualization_msgs::Marker marker;
+    marker.header.stamp=ros::Time::now();
+    marker.header.frame_id="map";
+    marker.lifetime=ros::Duration(0.0);
+    marker.action = visualization_msgs::Marker::DELETEALL;
+    line_pub->publish(marker);
+}
+
 void pub_line(visualization_msgs::Marker* line_msg,
               ros::Publisher* line_pub,
               double x1, double y1,

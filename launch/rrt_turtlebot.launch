@@ -1,0 +1,12 @@
+<launch>
+  <rosparam command="load" file="$(find rrt-global-planner)/params/rrt_global_planner.yaml" />
+
+  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch">
+    <arg name="gui" value="false"/>
+    <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/turtlebot3_world.world"/>
+  </include>
+
+  <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+  </include>
+
+</launch>

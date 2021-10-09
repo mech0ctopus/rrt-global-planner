@@ -21,12 +21,20 @@ void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* co
     costmap_ = costmap_ros_->getCostmap();
 
     ros::NodeHandle nh;
-    plan_pub_ = nh.advertise<nav_msgs::Path>("/move_base/DWAPlannerROS/global_plan", 1);
+
     ROS_INFO("Initializing RRTGlobalPlanner.");
     // Retrieve RRT parameters (or set to default values)
-    nh.param("/rrt/goal_tol", goal_tol, 0.1);
+    nh.param("/rrt/goal_tol", goal_tol, 0.05);
     nh.param("/rrt/K_in", K_in, 4000); 
     nh.param("/rrt/d", d, 0.2);
+    nh.param("/rrt/viz_tree", viz_tree, false);
+
+    plan_pub_ = nh.advertise<nav_msgs::Path>("/move_base/RRTGlobalPlanner/global_plan", 1);
+    
+    if (viz_tree){
+      tree_pub_ = nh.advertise<visualization_msgs::Marker>("/move_base/RRTGlobalPlanner/tree", 1);
+      init_line(&tree_msg);
+    }
 }
 
 bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, 
@@ -36,6 +44,17 @@ bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start,
     rrt T_out=generateRRT(start, goal, 
                           this->costmap_ros_, this->goal_tol, 
                           this->K_in, this->d);
+
+    if (viz_tree){
+        // TODO: Clear all existing edges, re-initialize
+        clear_markers(&tree_pub_);
+        // Publish all edges
+        for (auto edge: T_out.edges){
+            pub_line(&tree_msg, &tree_pub_,
+                     edge.at(0).x, edge.at(0).y,
+                     edge.at(1).x, edge.at(1).y);
+        }
+    }
 
     if (T_out.success){
       // Get Global path (clears, then sets plan)

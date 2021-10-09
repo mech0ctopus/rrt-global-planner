@@ -19,6 +19,7 @@
 
 #include "2d_space.hpp"
 #include "math_funcs.hpp"
+#include "visualization.hpp"
 
 using std::string;
 
@@ -43,7 +44,9 @@ namespace global_planner {
             costmap_2d::Costmap2D* costmap_;
             double goal_tol, d;
             int K_in;
-            ros::Publisher plan_pub_;
+            bool viz_tree;
+            ros::Publisher plan_pub_, tree_pub_;
+            visualization_msgs::Marker tree_msg;
     };  
 };
 
