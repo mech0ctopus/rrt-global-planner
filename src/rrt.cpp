@@ -19,20 +19,14 @@ RRTGlobalPlanner::RRTGlobalPlanner(std::string name, costmap_2d::Costmap2DROS* c
 void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
     costmap_ros_ = costmap_ros;
     costmap_ = costmap_ros_->getCostmap();
-    // footprint_ = costmap_ros_->getRobotFootprint();
 
     ros::NodeHandle nh;
     plan_pub_ = nh.advertise<nav_msgs::Path>("/move_base/DWAPlannerROS/global_plan", 1);
     ROS_INFO("Initializing RRTGlobalPlanner.");
-    // Retrieve RRT parameters
-    nh.getParam("/rrt/goal_tol", goal_tol);
-    nh.getParam("/rrt/K_in", K_in); 
-    nh.getParam("/rrt/d", d);
-    // Retrieve move_base parameters
-    nh.getParam("/move_base/global_costmap/global_frame", global_costmap_frame);
-    nh.getParam("/move_base/global_costmap/origin_x", global_costmap_origin_x);
-    nh.getParam("/move_base/global_costmap/origin_y", global_costmap_origin_y);
-    ROS_INFO("Retrieved parameters for RRTGlobalPlanner.");
+    // Retrieve RRT parameters (or set to default values)
+    nh.param("/rrt/goal_tol", goal_tol, 0.1);
+    nh.param("/rrt/K_in", K_in, 4000); 
+    nh.param("/rrt/d", d, 0.2);
 }
 
 bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, 

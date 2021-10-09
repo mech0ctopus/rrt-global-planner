@@ -43,8 +43,6 @@ namespace global_planner {
             costmap_2d::Costmap2D* costmap_;
             double goal_tol, d;
             int K_in;
-            std::string global_costmap_frame;
-            std::string global_costmap_origin_x, global_costmap_origin_y;
             ros::Publisher plan_pub_;
     };  
 };
