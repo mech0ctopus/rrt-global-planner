@@ -51,6 +51,7 @@ bool inFreeSpace(const geometry_msgs::Point point,
 bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge, 
                      const costmap_2d::Costmap2DROS* costmap_ros){
     bool result{1};
+    //TODO: This should be inferred from robot footprint
     double edge_res{0.1}; //Resolution of discrete points on edge
 
     //Discretize edge into an array of points

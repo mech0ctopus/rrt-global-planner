@@ -43,13 +43,15 @@ bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start,
                           this->costmap_ros_, this->goal_tol, 
                           this->K_in, this->d);
 
-    // Get Global path (clears, then sets plan)
-    getGlobalPath(&T_out, &plan, start, goal);
-    ROS_INFO("Found Global Path from RRT");
-
-    publishPlan(plan);
-
-    return true;
+    if (T_out.success){
+      // Get Global path (clears, then sets plan)
+      getGlobalPath(&T_out, &plan, start, goal);
+      publishPlan(plan);
+      return true;
+    } else {
+      ROS_INFO("Failed to find Global Path from RRT.");
+      return false;
+    }
   }
 
   void RRTGlobalPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped>& plan){

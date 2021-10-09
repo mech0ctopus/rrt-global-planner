@@ -79,6 +79,8 @@ public:
     std::vector<std::vector<geometry_msgs::Point>> edges{};
     // Free state space
     costmap_2d::Costmap2DROS* X_space;
+    // Whether tree reached goal
+    bool success{0};
 
     //Constructor for RRT
     rrt(geometry_msgs::Point x_init, costmap_2d::Costmap2DROS* costmap_ros){
@@ -210,13 +212,14 @@ rrt generateRRT(geometry_msgs::PoseStamped x_init, //In map frame
             T.add_vertex(x_new);
             T.add_edge(x_near.vertex, x_new.vertex);
         } else {
-            k--;
             continue;
         };
 
         ROS_INFO("Processed %i/%i RRT vertices.", k, K);
 
-        if (getDistance(x_new.vertex, x_final.pose.position)<=goal_tol){ 
+        if (getDistance(x_new.vertex, x_final.pose.position)<=goal_tol){
+            ROS_INFO("Found solution with %i/%i RRT vertices.", k, K); 
+            T.success=1;
             break;          
         }
 
