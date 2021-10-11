@@ -7,6 +7,9 @@
   </include>
 
   <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+    <arg name="open_rviz" default="false"/>
   </include>
 
+  <node pkg="rviz" type="rviz" name="rviz" required="true"
+        args="-d $(find rrt-global-planner)/config/rrt_tb3.rviz"/>
 </launch>
