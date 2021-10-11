@@ -33,7 +33,6 @@ void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* co
     
     if (viz_tree){
       tree_pub_ = nh.advertise<visualization_msgs::Marker>("/move_base/RRTGlobalPlanner/tree", 1);
-      init_line(&tree_msg);
     }
 }
 
@@ -46,8 +45,9 @@ bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start,
                           this->K_in, this->d);
 
     if (viz_tree){
-        // TODO: Clear all existing edges, re-initialize
-        clear_markers(&tree_pub_);
+        //Clear previous tree markers and reset
+        visualization_msgs::Marker tree_msg;
+        init_line(&tree_msg);
         // Publish all edges
         for (auto edge: T_out.edges){
             pub_line(&tree_msg, &tree_pub_,

@@ -8,19 +8,18 @@
 void init_line(visualization_msgs::Marker* line_msg){
     line_msg->header.frame_id="map";
     line_msg->id = 0;
+    line_msg->ns = "tree";
     line_msg->type = visualization_msgs::Marker::LINE_LIST;
     line_msg->action = visualization_msgs::Marker::ADD;
     line_msg->pose.orientation.w=1.0;
-
     line_msg->scale.x=0.05; //in meters (width of segments)
-
 }
 
 void clear_markers(ros::Publisher* line_pub) {
     visualization_msgs::Marker marker;
-    marker.header.stamp=ros::Time::now();
     marker.header.frame_id="map";
-    marker.lifetime=ros::Duration(0.0);
+    marker.ns="tree";
+    marker.id = 0;
     marker.action = visualization_msgs::Marker::DELETEALL;
     line_pub->publish(marker);
 }
@@ -62,7 +61,6 @@ void pub_line(visualization_msgs::Marker* line_msg,
 
     //Publish line_msg
     line_pub->publish(*line_msg);
-    // ROS_INFO("Published updated Line Marker.");
 }
 
 void init_marker(visualization_msgs::Marker* marker_msg){

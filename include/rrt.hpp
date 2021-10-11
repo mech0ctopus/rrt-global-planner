@@ -46,7 +46,6 @@ namespace global_planner {
             int K_in;
             bool viz_tree;
             ros::Publisher plan_pub_, tree_pub_;
-            visualization_msgs::Marker tree_msg;
     };  
 };
 
@@ -216,7 +215,7 @@ rrt generateRRT(geometry_msgs::PoseStamped x_init, //In map frame
             continue;
         };
 
-        ROS_INFO("Processed %i/%i RRT vertices.", k, K);
+        // ROS_INFO("Processed %i/%i RRT vertices.", k, K);
 
         if (getDistance(x_new.vertex, x_final.pose.position)<=goal_tol){
             ROS_INFO("Found solution with %i/%i RRT vertices.", k, K); 
