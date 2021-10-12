@@ -17,12 +17,13 @@ RRTGlobalPlanner::RRTGlobalPlanner(std::string name, costmap_2d::Costmap2DROS* c
 }
 
 void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
+    ROS_INFO("Initializing RRTGlobalPlanner.");
     costmap_ros_ = costmap_ros;
     costmap_ = costmap_ros_->getCostmap();
+    footprint = costmap_ros_->getRobotFootprint();
+    robot_radius = getRobotRadius(footprint);
 
     ros::NodeHandle nh;
-
-    ROS_INFO("Initializing RRTGlobalPlanner.");
     // Retrieve RRT parameters (or set to default values)
     nh.param("/rrt/goal_tol", goal_tol, 0.05);
     nh.param("/rrt/K_in", K_in, 4000); 
@@ -39,13 +40,12 @@ void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* co
 bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, 
                                 const geometry_msgs::PoseStamped& goal,  
                                 std::vector<geometry_msgs::PoseStamped>& plan ){
-    ROS_INFO("Generating RRT.");
+    ROS_INFO("Generating Global Plan with RRT.");
     rrt T_out=generateRRT(start, goal, 
-                          this->costmap_ros_, this->goal_tol, 
-                          this->K_in, this->d);
+                          this->costmap_ros_, this->robot_radius,
+                          this->goal_tol, this->K_in, this->d);
 
     if (viz_tree){
-        //Clear previous tree markers and reset
         visualization_msgs::Marker tree_msg;
         init_line(&tree_msg);
         // Publish all edges
@@ -62,7 +62,7 @@ bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start,
       publishPlan(plan);
       return true;
     } else {
-      ROS_INFO("Failed to find Global Path from RRT.");
+      ROS_INFO("Failed to find Global Plan with RRT.");
       return false;
     }
   }

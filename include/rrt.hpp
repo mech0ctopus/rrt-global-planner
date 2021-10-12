@@ -42,7 +42,8 @@ namespace global_planner {
         private:
             costmap_2d::Costmap2DROS* costmap_ros_;
             costmap_2d::Costmap2D* costmap_;
-            double goal_tol, d;
+            std::vector<geometry_msgs::Point> footprint;
+            double goal_tol, d, robot_radius;
             int K_in;
             bool viz_tree;
             ros::Publisher plan_pub_, tree_pub_;
@@ -180,6 +181,7 @@ tree_node extendTree(const tree_node point_near,
 rrt generateRRT(geometry_msgs::PoseStamped x_init, //In map frame
                 geometry_msgs::PoseStamped x_final, //In map frame
                 costmap_2d::Costmap2DROS* costmap_ros,
+                double robot_radius,
                 double goal_tol,
                 int K,
                 double d){
@@ -207,7 +209,7 @@ rrt generateRRT(geometry_msgs::PoseStamped x_init, //In map frame
         edge.push_back(x_near.vertex);
         
         // Check if edge is in free space
-        edgeIsFree=edgeInFreeSpace(edge, T.X_space);
+        edgeIsFree=edgeInFreeSpace(edge, T.X_space, robot_radius);
         if (edgeIsFree){
             T.add_vertex(x_new);
             T.add_edge(x_near.vertex, x_new.vertex);
@@ -226,6 +228,21 @@ rrt generateRRT(geometry_msgs::PoseStamped x_init, //In map frame
     }
 
     return T;
+}
+
+//Gets robot radius based on footprint
+double getRobotRadius(std::vector<geometry_msgs::Point> footprint){
+    double max_dist{0.}, dist{};
+    geometry_msgs::Point origin{};
+    origin.x=0.; origin.y=0.; origin.z=0.;
+
+    for (auto pt : footprint){
+        dist=getDistance(origin, pt);
+        if (dist>max_dist){
+            max_dist=dist;
+        }
+    }
+    return max_dist;
 }
 
 //Returns Global path from start to goal from RRT

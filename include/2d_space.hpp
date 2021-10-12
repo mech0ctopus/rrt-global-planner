@@ -7,6 +7,9 @@
 
 #include "math_funcs.hpp"
 
+#define TWO_M_PI 2*M_PI
+#define M_PI_10 M_PI/10.
+
 struct idx{
     unsigned int x, y;
 };
@@ -48,17 +51,18 @@ bool inFreeSpace(const geometry_msgs::Point point,
     return result;
 }
 
+//Checks if robot path along edge is in free space.
+//Checks at robot centerpoint and around circumscribed radius.
 bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge, 
-                     const costmap_2d::Costmap2DROS* costmap_ros){
+                     const costmap_2d::Costmap2DROS* costmap_ros,
+                     const double robot_radius){
     bool result{1};
-    //TODO: This should be inferred from robot footprint
-    double edge_res{0.1}; //Resolution of discrete points on edge
 
     //Discretize edge into an array of points
     double dist=getDistance(edge[0],
                             edge[1]);
-    //Get num of points
-    double num_points=dist/edge_res;
+    //Get num of points. radius acts as resolution.
+    double num_points=dist/robot_radius;
     std::vector<geometry_msgs::Point> edge_points;
     geometry_msgs::Point edge_pt_ii{};
     for (double ii = 0.; ii <= num_points; ii++){
@@ -67,15 +71,31 @@ bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge,
         edge_points.push_back(edge_pt_ii);
     }
     //Check each point in array using inFreeSpace
-    bool edgePointIsFree{0};
+    bool edgePointIsFree{0}, circPointIsFree{0};
+    geometry_msgs::Point circ_point{}; //Point on robot's circumscribed radius
+    circ_point.z=0;
     for (auto edge_point:edge_points){
+        //Check centerpoint of robot
         edgePointIsFree=inFreeSpace(edge_point, costmap_ros);
         if (edgePointIsFree){
-            continue; //skip to next iteration
+            //pass
         } else {
             result=0;
-
             break;
+        }
+        //Check points around circumscribed radius
+        double theta{0};
+        while(theta<=TWO_M_PI){
+            circ_point.x=edge_point.x+robot_radius*cos(theta);
+            circ_point.y=edge_point.y+robot_radius*sin(theta);
+            circPointIsFree=inFreeSpace(circ_point, costmap_ros);
+            if (circPointIsFree){
+                //pass
+            } else {
+                result=0;
+                break;
+            }
+            theta+=M_PI_10;
         }
     }
     return result;

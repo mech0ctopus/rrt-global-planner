@@ -15,15 +15,6 @@ void init_line(visualization_msgs::Marker* line_msg){
     line_msg->scale.x=0.05; //in meters (width of segments)
 }
 
-void clear_markers(ros::Publisher* line_pub) {
-    visualization_msgs::Marker marker;
-    marker.header.frame_id="map";
-    marker.ns="tree";
-    marker.id = 0;
-    marker.action = visualization_msgs::Marker::DELETEALL;
-    line_pub->publish(marker);
-}
-
 void pub_line(visualization_msgs::Marker* line_msg,
               ros::Publisher* line_pub,
               double x1, double y1,
