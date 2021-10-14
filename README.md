@@ -2,7 +2,7 @@
 A [Rapidly Exploring Random Trees (RRT)](https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree) global path planner plugin for ROS.
 
 ## Demo
-![](https://github.com/mech0ctopus/rrt-global-planner/tree/main/assets/rrt_tb3_rviz.gif)
+![](https://github.com/mech0ctopus/rrt-global-planner/raw/main/assets/rrt_tb3_rviz.gif)
 
 ## Install Dependancies and Build
 ```bash
