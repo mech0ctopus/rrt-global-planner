@@ -53,7 +53,7 @@ None.
 ### Services
 None.
 
-### RViz
+## RViz
 An example RViz config file is available in rrt-global-planner/config. Include the following node in your launch file to use it.
 ```xml
 <node pkg="rviz" type="rviz" name="rviz" required="true"
