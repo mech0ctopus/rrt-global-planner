@@ -43,18 +43,17 @@ An example launch file for using  ```RRTGlobalPlanner``` with the [TurtleBot3 Si
 None.
 
 ### Parameters
-`~move_base/RRTGlobalPlanner/goal_tol` (`double`, default: 0.05)
+`~/move_base/RRTGlobalPlanner/goal_tol` (`double`, default: 0.05)
 - Cartesian goal tolerance to be achieved by the global planner.
 
-`~move_base/RRTGlobalPlanner/K_in` (`int`, default: 4000)
+`~/move_base/RRTGlobalPlanner/K_in` (`int`, default: 4000)
 - Maximum number of iterations to attempt to find a plan.
 
-`~move_base/RRTGlobalPlanner/d` (`double`, default: 0.2)
+`~/move_base/RRTGlobalPlanner/d` (`double`, default: 0.2)
 - Distance to extend tree per iteration.
 
-`~move_base/RRTGlobalPlanner/viz_tree` (`bool`, default: false)
+`~/move_base/RRTGlobalPlanner/viz_tree` (`bool`, default: false)
 - Whether to publish full tree on `~/move_base/RRTGlobalPlanner/tree` topic for visualization purposes after planning success. 
 
 ### Services
 None.
-```
