@@ -26,18 +26,18 @@ void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* co
   footprint = costmap_ros_->getRobotFootprint();
   robot_radius = getRobotRadius(footprint);
 
-  ros::NodeHandle nh;
+  ros::NodeHandle nh("~/"+name);
   // Retrieve RRT parameters (or set to default values)
-  nh.param("/rrt/goal_tol", goal_tol, 0.05);
-  nh.param("/rrt/K_in", K_in, 4000);
-  nh.param("/rrt/d", d, 0.2);
-  nh.param("/rrt/viz_tree", viz_tree, false);
+  nh.param("goal_tol", goal_tol, 0.05);
+  nh.param("K_in", K_in, 4000);
+  nh.param("d", d, 0.2);
+  nh.param("viz_tree", viz_tree, false);
 
-  plan_pub_ = nh.advertise<nav_msgs::Path>("/move_base/RRTGlobalPlanner/global_plan", 1);
+  plan_pub_ = nh.advertise<nav_msgs::Path>("global_plan", 1);
 
   if (viz_tree)
   {
-    tree_pub_ = nh.advertise<visualization_msgs::Marker>("/move_base/RRTGlobalPlanner/tree", 1);
+    tree_pub_ = nh.advertise<visualization_msgs::Marker>("tree", 1);
   }
 }
 

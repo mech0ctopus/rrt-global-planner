@@ -1,4 +1,4 @@
-rrt:
+RRTGlobalPlanner:
   goal_tol: 0.1
   K_in: 4000
   d: 0.2

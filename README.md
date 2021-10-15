@@ -14,17 +14,22 @@ source devel/setup.bash
 ```
 
 ## Usage
-Within the [move\_base](https://wiki.ros.org/move_base) node in your launch file, set the ````base_global_planner```` parameter to the following:
+Within the [move\_base](https://wiki.ros.org/move_base) node in your launch file, set the ````base_global_planner```` parameter to ```global_planner/RRTGlobalPlanner``` and load the required parameters.
 ```xml
 <param name="base_global_planner" value="global_planner/RRTGlobalPlanner"/>
-```
-
-A ```.yaml``` file containing parameters for the planner should also be included in your launch file. 
-```xml
-<rosparam command="load" file="$(find rrt-global-planner)/params/rrt_global_planner.yaml" />
+<rosparam file="$(find rrt-global-planner)/params/rrt_global_planner.yaml" command="load" />
 ```
 
 After launching the system, when you set a ```move_base/goal``` using RViz's ```2D Nav Goal``` or with an action client, the ```RRTGlobalPlanner``` will be called. The global path will be published as a topic for visualization. Optionally, a visualization of the full RRT constructed for path planning will be published.
+
+A RViz config file is available in [rrt-global-planner/config](https://github.com/mech0ctopus/rrt-global-planner/tree/main/config). Include the following node in your launch file to use it.
+```xml
+<node pkg="rviz" type="rviz" name="rviz" required="true"
+    args="-d $(find rrt-global-planner)/config/rrt_tb3.rviz"/>
+```
+
+## Example
+An example launch file for using  ```RRTGlobalPlanner``` with the [TurtleBot3 Simulation](https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/) is located in [rrt-global-planner/launch](https://github.com/mech0ctopus/rrt-global-planner/tree/main/launch).
 
 ## ROS API
 ### Published Topics
@@ -38,24 +43,18 @@ After launching the system, when you set a ```move_base/goal``` using RViz's ```
 None.
 
 ### Parameters
-`~/rrt/goal_tol` (`double`, default: 0.05)
+`~move_base/RRTGlobalPlanner/goal_tol` (`double`, default: 0.05)
 - Cartesian goal tolerance to be achieved by the global planner.
 
-`~/rrt/K_in` (`int`, default: 4000)
+`~move_base/RRTGlobalPlanner/K_in` (`int`, default: 4000)
 - Maximum number of iterations to attempt to find a plan.
 
-`~/rrt/d` (`double`, default: 0.2)
+`~move_base/RRTGlobalPlanner/d` (`double`, default: 0.2)
 - Distance to extend tree per iteration.
 
-`~/rrt/viz_tree` (`bool`, default: false)
+`~move_base/RRTGlobalPlanner/viz_tree` (`bool`, default: false)
 - Whether to publish full tree on `~/move_base/RRTGlobalPlanner/tree` topic for visualization purposes after planning success. 
 
 ### Services
 None.
-
-## RViz
-An example RViz config file is available in rrt-global-planner/config. Include the following node in your launch file to use it.
-```xml
-<node pkg="rviz" type="rviz" name="rviz" required="true"
-    args="-d $(find rrt-global-planner)/config/rrt_tb3.rviz"/>
 ```
