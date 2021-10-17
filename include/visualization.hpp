@@ -78,7 +78,6 @@ void pub_marker(visualization_msgs::Marker* marker_msg, ros::Publisher* marker_p
   marker_msg->pose.position.x = x1;
   marker_msg->pose.position.y = y1;
   marker_msg->pose.position.z = 1.0;
-  // Publish grid_msg
+  // Publish marker_msg
   marker_pub->publish(*marker_msg);
-  // ROS_INFO("Published updated Marker.");
 }

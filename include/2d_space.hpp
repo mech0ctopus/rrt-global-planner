@@ -114,15 +114,19 @@ geometry_msgs::Point getRandomState(costmap_2d::Costmap2DROS* costmap_ros, const
   // Choose random number from 0 to max. [inclusive]
   geometry_msgs::Point randomState{};
   randomState.z = 0.;  // Assume z=0 for now.
+  costmap_2d::Costmap2D* costmap_;
+  costmap_ = costmap_ros->getCostmap();
+  
   // Keep picking points until you find one in free space
   bool pointIsFree{ 0 };
 
-  double max_w = costmap_ros->getCostmap()->getSizeInCellsX() * costmap_ros->getCostmap()->getResolution();
-  double max_h = costmap_ros->getCostmap()->getSizeInCellsY() * costmap_ros->getCostmap()->getResolution();
+  double origin_x = costmap_->getOriginX();
+  double origin_y = costmap_->getOriginY();
+
   while (!pointIsFree)
   {
-    randomState.x = randomDouble(-max_w / 2, max_w / 2);
-    randomState.y = randomDouble(-max_h / 2, max_h / 2);
+    randomState.x = randomDouble(origin_x, origin_x + costmap_->getSizeInMetersX());
+    randomState.y = randomDouble(origin_y, origin_y + costmap_->getSizeInMetersY());
     pointIsFree = inFreeSpace(randomState, costmap_ros, robot_radius);
   }
   return randomState;
