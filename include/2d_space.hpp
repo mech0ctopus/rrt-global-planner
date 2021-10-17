@@ -33,26 +33,26 @@ bool inFreeSpace(const geometry_msgs::Point point, const costmap_2d::Costmap2DRO
                  const double robot_radius_max)
 {
   bool result{ 1 };
-  double theta{0};
-  double robot_radius_ii{robot_radius_max};
-  double robot_radius_step(0.05); //Assume 5cm step.
+  double theta{ 0 };
+  double robot_radius_ii{ robot_radius_max };
+  double robot_radius_step(0.05);  // Assume 5cm step.
   costmap_2d::Costmap2D* costmap_;
   geometry_msgs::Point point_to_check;
   unsigned int mx, my;
   std::vector<costmap_2d::MapLocation> map_polygon, polygon_cells;
 
-  costmap_=costmap_ros->getCostmap();
+  costmap_ = costmap_ros->getCostmap();
 
-  //Build inflated/circumscribed robot footprint
+  // Build inflated/circumscribed robot footprint
   while (theta <= TWO_M_PI)
   {
     costmap_2d::MapLocation map_loc;
 
-    //Try to convert footprint to map coordinates
-    if (!costmap_->worldToMap(point.x + robot_radius_max * cos(theta), 
-                              point.y + robot_radius_max * sin(theta), map_loc.x, map_loc.y))
+    // Try to convert footprint to map coordinates
+    if (!costmap_->worldToMap(point.x + robot_radius_max * cos(theta), point.y + robot_radius_max * sin(theta),
+                              map_loc.x, map_loc.y))
     {
-      //ROS_INFO("Footprint point is outside of map bounds.");
+      // ROS_INFO("Footprint point is outside of map bounds.");
       return false;
     }
 
@@ -61,13 +61,15 @@ bool inFreeSpace(const geometry_msgs::Point point, const costmap_2d::Costmap2DRO
     theta += M_PI_10;
   }
 
-  //Get the all map cells within inflated/circumscribed robot footprint
+  // Get the all map cells within inflated/circumscribed robot footprint
   costmap_->convexFillCells(map_polygon, polygon_cells);
-  
-  //For each cell in polygon_cells, check the cost against the threshold.
-  for (unsigned int i = 0; i < polygon_cells.size(); ++i){
-    if (costmap_->getCost(polygon_cells[i].x, polygon_cells[i].y) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE){
-      result=0;
+
+  // For each cell in polygon_cells, check the cost against the threshold.
+  for (unsigned int i = 0; i < polygon_cells.size(); ++i)
+  {
+    if (costmap_->getCost(polygon_cells[i].x, polygon_cells[i].y) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+    {
+      result = 0;
       break;
     }
   }
@@ -92,8 +94,9 @@ bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge, const costmap
     edge_pt_ii.x = edge[0].x + ii * (edge[1].x - edge[0].x) / num_points;
     edge_pt_ii.y = edge[0].y + ii * (edge[1].y - edge[0].y) / num_points;
 
-    if (!inFreeSpace(edge_pt_ii, costmap_ros, robot_radius)){
-      result=0;
+    if (!inFreeSpace(edge_pt_ii, costmap_ros, robot_radius))
+    {
+      result = 0;
       break;
     }
   }

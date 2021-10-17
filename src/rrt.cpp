@@ -20,30 +20,43 @@ RRTGlobalPlanner::RRTGlobalPlanner(std::string name, costmap_2d::Costmap2DROS* c
 
 void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros)
 {
-  ROS_INFO("Initializing RRTGlobalPlanner.");
-  costmap_ros_ = costmap_ros;
-  costmap_ = costmap_ros_->getCostmap();
-  footprint = costmap_ros_->getRobotFootprint(); //footprint is padded by footprint_padding rosparam
-  robot_radius = getRobotRadius(footprint);
-
-  ros::NodeHandle nh("~/"+name);
-  // Retrieve RRT parameters (or set to default values)
-  nh.param("goal_tol", goal_tol, 0.05);
-  nh.param("K_in", K_in, 4000);
-  nh.param("d", d, 0.2);
-  nh.param("viz_tree", viz_tree, false);
-
-  plan_pub_ = nh.advertise<nav_msgs::Path>("global_plan", 1);
-
-  if (viz_tree)
+  if (!initialized_)
   {
-    tree_pub_ = nh.advertise<visualization_msgs::Marker>("tree", 1);
+    ROS_INFO("Initializing RRTGlobalPlanner.");
+    name_ = name;
+    costmap_ros_ = costmap_ros;
+    costmap_ = costmap_ros_->getCostmap();
+    footprint = costmap_ros_->getRobotFootprint();  // footprint is padded by footprint_padding rosparam
+    robot_radius = getRobotRadius(footprint);
+
+    ros::NodeHandle nh("~/" + name);
+    // Retrieve RRT parameters (or set to default values)
+    nh.param("goal_tol", goal_tol, 0.05);
+    nh.param("K_in", K_in, 4000);
+    nh.param("d", d, 0.2);
+    nh.param("viz_tree", viz_tree, false);
+
+    plan_pub_ = nh.advertise<nav_msgs::Path>("global_plan", 1);
+
+    if (viz_tree)
+    {
+      tree_pub_ = nh.advertise<visualization_msgs::Marker>("tree", 1);
+    }
+
+    initialized_ = true;
   }
 }
 
 bool RRTGlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
                                 std::vector<geometry_msgs::PoseStamped>& plan)
 {
+  if (!initialized_)
+  {
+    ROS_ERROR("Global planner was not initialized, performing initialization.");
+    initialize(name_, costmap_ros_);
+    return false;
+  }
+
   ROS_INFO("Generating Global Plan with RRT.");
   rrt T_out = generateRRT(start, goal, this->costmap_ros_, this->robot_radius, this->goal_tol, this->K_in, this->d);
 

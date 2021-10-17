@@ -43,12 +43,13 @@ public:
   }
 
 private:
+  std::string name_;
   costmap_2d::Costmap2DROS* costmap_ros_;
   costmap_2d::Costmap2D* costmap_;
   std::vector<geometry_msgs::Point> footprint;
   double goal_tol, d, robot_radius;
   int K_in;
-  bool viz_tree;
+  bool viz_tree, initialized_;
   ros::Publisher plan_pub_, tree_pub_;
 };
 };  // namespace global_planner
