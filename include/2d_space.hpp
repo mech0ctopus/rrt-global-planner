@@ -37,13 +37,12 @@ double getDistance(const geometry_msgs::Point point1, const geometry_msgs::Point
 bool inFreeSpace(const geometry_msgs::Point point, const costmap_2d::Costmap2DROS* costmap_ros)
 {
   bool result{ 0 };
-  unsigned char threshold{ 252 };
   unsigned int mx, my;
 
   // Set mx, my (map coordinates) from world
   costmap_ros->getCostmap()->worldToMap(point.x, point.y, mx, my);
 
-  if (costmap_ros->getCostmap()->getCost(mx, my) <= threshold)
+  if (costmap_ros->getCostmap()->getCost(mx, my) <= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
   {
     result = 1;
   }
