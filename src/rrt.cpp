@@ -23,7 +23,7 @@ void RRTGlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* co
   ROS_INFO("Initializing RRTGlobalPlanner.");
   costmap_ros_ = costmap_ros;
   costmap_ = costmap_ros_->getCostmap();
-  footprint = costmap_ros_->getRobotFootprint();
+  footprint = costmap_ros_->getRobotFootprint(); //footprint is padded by footprint_padding rosparam
   robot_radius = getRobotRadius(footprint);
 
   ros::NodeHandle nh("~/"+name);

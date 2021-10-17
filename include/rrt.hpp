@@ -202,7 +202,7 @@ rrt generateRRT(geometry_msgs::PoseStamped x_init,   // In map frame
     std::vector<geometry_msgs::Point> edge{};
 
     // Get random configuration
-    x_rand = getRandomState(T.X_space);
+    x_rand = getRandomState(T.X_space, robot_radius);
     // Get nearest existing neighbor to random pose
     x_near = getNearestNeighbor(x_rand, &T);
     // Extend x_near toward x_rand

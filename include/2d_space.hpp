@@ -10,11 +10,6 @@
 #define TWO_M_PI 2 * M_PI
 #define M_PI_10 M_PI / 10.
 
-struct idx
-{
-  unsigned int x, y;
-};
-
 /**
  * Calculates Euclidean distance between two 2D points.
  *
@@ -34,24 +29,43 @@ double getDistance(const geometry_msgs::Point point1, const geometry_msgs::Point
  *
  * @param[out] whether point is in free space.
  */
-bool inFreeSpace(const geometry_msgs::Point point, const costmap_2d::Costmap2DROS* costmap_ros)
+bool inFreeSpace(const geometry_msgs::Point point, const costmap_2d::Costmap2DROS* costmap_ros,
+                 const double robot_radius_max)
 {
-  bool result{ 0 };
+  bool result{ 1 };
+  double theta{0};
+  double robot_radius_ii{robot_radius_max};
+  double robot_radius_step(0.05); //Assume 5cm step.
+  costmap_2d::Costmap2D* costmap_;
+  geometry_msgs::Point point_to_check;
   unsigned int mx, my;
 
-  // Set mx, my (map coordinates) from world
-  costmap_ros->getCostmap()->worldToMap(point.x, point.y, mx, my);
+  costmap_=costmap_ros->getCostmap();
 
-  if (costmap_ros->getCostmap()->getCost(mx, my) <= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+  // Build a circular footprint
+  while (theta <= TWO_M_PI)
   {
-    result = 1;
+    // At multiple radii within robot footprint
+    while (robot_radius_ii > 0.){
+      point_to_check.x = point.x + robot_radius_ii * cos(theta);
+      point_to_check.y = point.y + robot_radius_ii * sin(theta);
+
+      costmap_->worldToMap(point_to_check.x, point_to_check.y, mx, my);
+      // Check cost at point
+      if (costmap_->getCost(mx, my) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE){
+        result=0;
+        break;
+      }
+      robot_radius_ii -= robot_radius_step;
+    }
+    theta += M_PI_10;
   }
 
   return result;
 }
 
 // Checks if robot path along edge is in free space.
-// Checks at robot centerpoint and around circumscribed radius.
+// Checks at robot centerpoint and around circumscribed padded radius.
 bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge, const costmap_2d::Costmap2DROS* costmap_ros,
                      const double robot_radius)
 {
@@ -61,50 +75,18 @@ bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge, const costmap
   double dist = getDistance(edge[0], edge[1]);
   // Get num of points. radius acts as resolution.
   double num_points = dist / robot_radius;
-  std::vector<geometry_msgs::Point> edge_points;
   geometry_msgs::Point edge_pt_ii{};
   for (double ii = 0.; ii <= num_points; ii++)
   {
     edge_pt_ii.x = edge[0].x + ii * (edge[1].x - edge[0].x) / num_points;
     edge_pt_ii.y = edge[0].y + ii * (edge[1].y - edge[0].y) / num_points;
-    edge_points.push_back(edge_pt_ii);
-  }
-  // Check each point in array using inFreeSpace
-  bool edgePointIsFree{ 0 }, circPointIsFree{ 0 };
-  geometry_msgs::Point circ_point{};  // Point on robot's circumscribed radius
-  circ_point.z = 0;
-  for (auto edge_point : edge_points)
-  {
-    // Check centerpoint of robot
-    edgePointIsFree = inFreeSpace(edge_point, costmap_ros);
-    if (edgePointIsFree)
-    {
-      // pass
-    }
-    else
-    {
-      result = 0;
+
+    if (!inFreeSpace(edge_pt_ii, costmap_ros, robot_radius)){
+      result=0;
       break;
     }
-    // Check points around circumscribed radius
-    double theta{ 0 };
-    while (theta <= TWO_M_PI)
-    {
-      circ_point.x = edge_point.x + robot_radius * cos(theta);
-      circ_point.y = edge_point.y + robot_radius * sin(theta);
-      circPointIsFree = inFreeSpace(circ_point, costmap_ros);
-      if (circPointIsFree)
-      {
-        // pass
-      }
-      else
-      {
-        result = 0;
-        break;
-      }
-      theta += M_PI_10;
-    }
   }
+
   return result;
 }
 
@@ -113,7 +95,7 @@ bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge, const costmap
  *
  * @param[out] state Random state from space.
  */
-geometry_msgs::Point getRandomState(costmap_2d::Costmap2DROS* costmap_ros)
+geometry_msgs::Point getRandomState(costmap_2d::Costmap2DROS* costmap_ros, const double robot_radius)
 {
   // Choose random number from 0 to max. [inclusive]
   geometry_msgs::Point randomState{};
@@ -127,8 +109,7 @@ geometry_msgs::Point getRandomState(costmap_2d::Costmap2DROS* costmap_ros)
   {
     randomState.x = randomDouble(-max_w / 2, max_w / 2);
     randomState.y = randomDouble(-max_h / 2, max_h / 2);
-    pointIsFree = inFreeSpace(randomState, costmap_ros);
+    pointIsFree = inFreeSpace(randomState, costmap_ros, robot_radius);
   }
-
   return randomState;
 }
