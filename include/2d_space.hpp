@@ -39,26 +39,37 @@ bool inFreeSpace(const geometry_msgs::Point point, const costmap_2d::Costmap2DRO
   costmap_2d::Costmap2D* costmap_;
   geometry_msgs::Point point_to_check;
   unsigned int mx, my;
+  std::vector<costmap_2d::MapLocation> map_polygon, polygon_cells;
 
   costmap_=costmap_ros->getCostmap();
 
-  // Build a circular footprint
+  //Build inflated/circumscribed robot footprint
   while (theta <= TWO_M_PI)
   {
-    // At multiple radii within robot footprint
-    while (robot_radius_ii > 0.){
-      point_to_check.x = point.x + robot_radius_ii * cos(theta);
-      point_to_check.y = point.y + robot_radius_ii * sin(theta);
+    costmap_2d::MapLocation map_loc;
 
-      costmap_->worldToMap(point_to_check.x, point_to_check.y, mx, my);
-      // Check cost at point
-      if (costmap_->getCost(mx, my) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE){
-        result=0;
-        break;
-      }
-      robot_radius_ii -= robot_radius_step;
+    //Try to convert footprint to map coordinates
+    if (!costmap_->worldToMap(point.x + robot_radius_max * cos(theta), 
+                              point.y + robot_radius_max * sin(theta), map_loc.x, map_loc.y))
+    {
+      //ROS_INFO("Footprint point is outside of map bounds.");
+      return false;
     }
+
+    map_polygon.push_back(map_loc);
+
     theta += M_PI_10;
+  }
+
+  //Get the all map cells within inflated/circumscribed robot footprint
+  costmap_->convexFillCells(map_polygon, polygon_cells);
+  
+  //For each cell in polygon_cells, check the cost against the threshold.
+  for (unsigned int i = 0; i < polygon_cells.size(); ++i){
+    if (costmap_->getCost(polygon_cells[i].x, polygon_cells[i].y) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE){
+      result=0;
+      break;
+    }
   }
 
   return result;
