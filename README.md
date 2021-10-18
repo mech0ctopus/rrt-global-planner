@@ -14,22 +14,20 @@ source devel/setup.bash
 ```
 
 ## Usage
-Within the [move\_base](https://wiki.ros.org/move_base) node in your launch file, set the ````base_global_planner```` parameter to ```global_planner/RRTGlobalPlanner``` and load the required parameters.
+Within the [move\_base](https://wiki.ros.org/move_base) node in your launch file, set the `base_global_planner` parameter to `global_planner/RRTGlobalPlanner` and load the required parameters.
 ```xml
 <param name="base_global_planner" value="global_planner/RRTGlobalPlanner"/>
 <rosparam file="$(find rrt-global-planner)/params/rrt_global_planner.yaml" command="load" />
 ```
 
-After launching the system, when you set a ```move_base/goal``` using RViz's ```2D Nav Goal``` or with an action client, the ```RRTGlobalPlanner``` will be called. The global path will be published as a topic for visualization. Optionally, a visualization of the full RRT constructed for path planning will be published.
+After launching the system, when you set a `move_base/goal` using RViz's `2D Nav Goal` or with an action client, the `RRTGlobalPlanner` will be called. The global path will be published as a topic for visualization. Optionally, a visualization of the full RRT constructed for path planning will be published.
 
-A RViz config file is available in [rrt-global-planner/config](https://github.com/mech0ctopus/rrt-global-planner/tree/main/config). Include the following node in your launch file to use it.
-```xml
-<node pkg="rviz" type="rviz" name="rviz" required="true"
-    args="-d $(find rrt-global-planner)/config/rrt_tb3.rviz"/>
-```
+`RRTGlobalPlanner`'s output can be visualized in RViz. To see the global path, add a `Path` display and subscribe to `~/move_base/RRTGlobalPlanner/plan`. To see the full tree (`viz_tree` must be true), add a `Marker` display and subscribe to `~/move_base/RRTGlobalPlanner/tree`.
 
-## Example
-An example launch file for using  ```RRTGlobalPlanner``` with the [TurtleBot3 Simulation](https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/) is located in [rrt-global-planner/launch](https://github.com/mech0ctopus/rrt-global-planner/tree/main/launch).
+## Examples
+An example launch file for using `RRTGlobalPlanner` with the [TurtleBot3 Simulation](https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/) is located in [rrt-global-planner/launch](https://github.com/mech0ctopus/rrt-global-planner/tree/main/launch).
+
+An example RViz config file for using `RRTGlobalPlanner` with the [TurtleBot3 Simulation](https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/) is located in [rrt-global-planner/config](https://github.com/mech0ctopus/rrt-global-planner/tree/main/config).
 
 ## ROS API
 ### Published Topics

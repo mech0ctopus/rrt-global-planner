@@ -11,11 +11,16 @@
 #define M_PI_10 M_PI / 10.
 
 /**
- * Calculates Euclidean distance between two 2D points.
+ *  @brief Calculates Euclidean distance between two 2D points.
  *
- * @param[out] distance L2 Norm.
- * @param[in] point1 First point.
- * @param[in] point2 Second point.
+ *  @details
+ *   Calculates Euclidean distance between two 2D points.
+ *
+ *  @param distance L2 Norm.
+ *  @param point1 First point.
+ *  @param point2 Second point.
+ *  @return L2 Norm.
+ *
  */
 double getDistance(const geometry_msgs::Point point1, const geometry_msgs::Point point2)
 {
@@ -24,10 +29,17 @@ double getDistance(const geometry_msgs::Point point1, const geometry_msgs::Point
 }
 
 /**
- * Determines if Point is in free spaced X_space.
- * Assumes input point is the /map frame.
+ *  @brief Checks whether a point is free on global 2D costmap.
  *
- * @param[out] whether point is in free space.
+ *  @details
+ *   Checks point in global 2D costmap to confirm that the robot
+ *   can be placed in any orientation and will only occupy free space.
+ *
+ *  @param point Two points representing a line.
+ *  @param costmap_ros  Pointer to ROS wrapper for global 2D costmap.
+ *  @param robot_radius_max Circumscribed and padded robot radius.
+ *  @return                 Whether point is in free space.
+ *
  */
 bool inFreeSpace(const geometry_msgs::Point point, const costmap_2d::Costmap2DROS* costmap_ros,
                  const double robot_radius_max)
@@ -77,8 +89,20 @@ bool inFreeSpace(const geometry_msgs::Point point, const costmap_2d::Costmap2DRO
   return result;
 }
 
-// Checks if robot path along edge is in free space.
-// Checks at robot centerpoint and around circumscribed padded radius.
+/**
+ *  @brief Checks whether an edge is free on global 2D costmap.
+ *
+ *  @details
+ *   Discretizes edge, then checks several points along edge on global 2D costmap
+ *   to confirm that the robot can be placed in any orientation and
+ *   will only occupy free space.
+ *
+ *  @param edge Two points representing a line.
+ *  @param costmap_ros  Pointer to ROS wrapper for global 2D costmap.
+ *  @param robot_radius Circumscribed and padded robot radius.
+ *  @return             Whether edge is in free space.
+ *
+ */
 bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge, const costmap_2d::Costmap2DROS* costmap_ros,
                      const double robot_radius)
 {
@@ -105,18 +129,24 @@ bool edgeInFreeSpace(const std::vector<geometry_msgs::Point> edge, const costmap
 }
 
 /**
- * Randomly picks state from X_space.
+ *  @brief Picks a random state on global 2D costmap.
  *
- * @param[out] state Random state from space.
+ *  @details
+ *   Picks a random point on global 2D costmap at which the robot can be placed
+ *   in any orientation and will only occupy free space.
+ *
+ *  @param costmap_ros  Pointer to ROS wrapper for global 2D costmap.
+ *  @param robot_radius Circumscribed and padded robot radius.
+ *  @return             Random point on global costmap where robot is in free space.
+ *
  */
 geometry_msgs::Point getRandomState(costmap_2d::Costmap2DROS* costmap_ros, const double robot_radius)
 {
-  // Choose random number from 0 to max. [inclusive]
   geometry_msgs::Point randomState{};
   randomState.z = 0.;  // Assume z=0 for now.
   costmap_2d::Costmap2D* costmap_;
   costmap_ = costmap_ros->getCostmap();
-  
+
   // Keep picking points until you find one in free space
   bool pointIsFree{ 0 };
 
