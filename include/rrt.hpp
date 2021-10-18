@@ -56,14 +56,6 @@ private:
 
 #endif
 
-/**
- * Performs basic Rapidly-exploring Random Tree (RRT)
- * algorithm per original paper.
- *
- * http://msl.cs.uiuc.edu/~lavalle/papers/Lav98c.pdf
- * https://comrob.fel.cvut.cz/papers/romoco09rrt.pdf (helpful)
- */
-
 struct tree_node
 {
   int parent_id{};
@@ -73,7 +65,6 @@ struct tree_node
 /**
  * RRT Data Structure.
  *
- * @param[in] x_init Initial State.
  */
 class rrt
 {
@@ -121,12 +112,17 @@ public:
 };
 
 /**
- * Finds closest pose to point1 in X_space.
-
- * @param[in] point1 Point in X_space.
- * @param[in] T Existing RRT.
- * @param[out] nearest_neighbor Closest pose to pose1.
- */
+ *  @brief Finds closest tree node to an arbitary point.
+ *
+ *  @details
+ *   Finds the closest existing tree node in an RRT object
+ *   to an arbitary point.
+ *
+ *  @param point1 An arbitary point.
+ *  @param rrt Existing RRT object.
+ *  @return The closest (L2) tree node to point1.
+ *
+ **/
 tree_node getNearestNeighbor(const geometry_msgs::Point point1, const rrt* T)
 {
   geometry_msgs::Point nearest_neighbor{};
@@ -160,8 +156,17 @@ tree_node getNearestNeighbor(const geometry_msgs::Point point1, const rrt* T)
 }
 
 /**
- * Extend pose_near towards point_rand.
- */
+ *  @brief Extends pose_near towards point_rand.
+ *
+ *  @details
+ *   Creates a new tree node extending from point_near towards point_rand.
+ *
+ *  @param point_near Closest existing tree node to random point.
+ *  @param point_rand Random point in unoccupied space.
+ *  @param d Distance to extend tree.
+ *  @return A new tree node extending from point_near towards point_rand.
+ *
+ **/
 tree_node extendTree(const tree_node point_near, const geometry_msgs::Point point_rand, const double d)
 {
   tree_node point_new{};
@@ -177,24 +182,32 @@ tree_node extendTree(const tree_node point_near, const geometry_msgs::Point poin
 }
 
 /**
- * Generates RRT.
+ *  @brief Generates a RRT between start and goal robot poses.
  *
- * @param[out] T RRT.
- * @param[in] x_init Initial State within X_space.
- * @param[in] x_final Final State within X_space.
- * @param[in] goal_tol Cartesian Goal Tolerance.
- * @param[in] K Number of vertices.
- * @param[in] d Distance to extend tree per step.
- */
-rrt generateRRT(geometry_msgs::PoseStamped x_init,   // In map frame
-                geometry_msgs::PoseStamped x_final,  // In map frame
+ *  @details
+ *   Generates a RRT between start and goal robot poses checking global
+ *   costmap for occupied space.
+ *
+ *  @see http://msl.cs.uiuc.edu/~lavalle/papers/Lav98c.pdf
+ *
+ *  @param x_init Starting robot pose (map frame).
+ *  @param x_final Goal robot pose (map frame).
+ *  @param costmap_ros Pointer to ROS wrapper for global 2D costmap.
+ *  @param robot_radius Padded circumscribed robot footprint.
+ *  @param goal_tol Cartesian goal tolerance.
+ *  @param K Max. number of iterations.
+ *  @param d Distance to extend tree per step.
+ *  @return Full RRT linking x_init and x_final.
+ *
+ **/
+rrt generateRRT(geometry_msgs::PoseStamped x_init, geometry_msgs::PoseStamped x_final,
                 costmap_2d::Costmap2DROS* costmap_ros, double robot_radius, double goal_tol, int K, double d)
 {
   // Initialize RRT with x_init
   rrt T(x_init.pose.position, costmap_ros);
   // Initialize local variables
-  geometry_msgs::Point x_rand;  // in map frame
-  tree_node x_near, x_new;      // in map frame
+  geometry_msgs::Point x_rand;
+  tree_node x_near, x_new;
 
   // Build Tree
   for (int k = 1; k <= K; k++)
@@ -238,7 +251,16 @@ rrt generateRRT(geometry_msgs::PoseStamped x_init,   // In map frame
   return T;
 }
 
-// Gets robot radius based on footprint
+/**
+ *  @brief Calculates the robot radius from footprint.
+ *
+ *  @details
+ *   Calculates the circumscribed, inflated robot radius from 2D footprint.
+ *
+ *  @param footprint A polygon representing the 2D robot footprint.
+ *  @return Maximum distance from center.
+ *
+ **/
 double getRobotRadius(std::vector<geometry_msgs::Point> footprint)
 {
   double max_dist{ 0. }, dist{};
@@ -258,7 +280,21 @@ double getRobotRadius(std::vector<geometry_msgs::Point> footprint)
   return max_dist;
 }
 
-// Returns Global path from start to goal from RRT
+/**
+ *  @brief Calculates the global path from start to goal using
+ *  an existing RRT.
+ *
+ *  @details
+ *   Assumes RRT construction was successful. Walks from final
+ *   tree node at goal back to start, calculating orientations.
+ *
+ *  @param tree Pointer to a tree linking the start and goal poses.
+ *  @param plan Pointer to a plan object to populate.
+ *  @param start Robot start pose.
+ *  @param goal Robot goal pose.
+ *  @return true
+ *
+ **/
 bool getGlobalPath(const rrt* tree, std::vector<geometry_msgs::PoseStamped>* plan,
                    const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal)
 {
