@@ -4,7 +4,7 @@ A [Rapidly Exploring Random Trees (RRT)](https://en.wikipedia.org/wiki/Rapidly-e
 ## Demo
 ![](https://github.com/mech0ctopus/rrt-global-planner/raw/main/assets/rrt_tb3_rviz.gif)
 
-## Install Dependancies and Build
+## Install Dependencies and Build
 ```bash
 cd ~/catkin_ws/src
 git clone https://github.com/mech0ctopus/rrt-global-planner.git
@@ -28,6 +28,11 @@ After launching the system, when you set a `move_base/goal` using RViz's `2D Nav
 An example launch file for using `RRTGlobalPlanner` with the [TurtleBot3 Simulation](https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/) is located in [rrt-global-planner/launch](https://github.com/mech0ctopus/rrt-global-planner/tree/main/launch).
 
 An example RViz config file for using `RRTGlobalPlanner` with the [TurtleBot3 Simulation](https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/) is located in [rrt-global-planner/config](https://github.com/mech0ctopus/rrt-global-planner/tree/main/config).
+
+## Troubleshooting
+If you find that the RRT global planner continues to produce plans even after a solution has been found, try setting the `/move_base/planner_frequency` to 0. Zero is normally what the default value is (see `planner_frequency` on the [move_base Wiki](http://wiki.ros.org/move_base)), but that's not what the value is in the turtlebot examples. If you're running the turtlebot examples, you can change the parameter in `turtlebot3_navigation/param/move_base_params.yaml`.
+
+If you see that the RRT planner repeatedly fails to find a solution, you may want to play around with the parameters in the `rrt_global_planner.yaml`.
 
 ## ROS API
 ### Published Topics
